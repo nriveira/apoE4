@@ -1,0 +1,9 @@
+LFP Runspeed Analysis Pipeline
+
+PREPROCESSING
+Since the radPos variable gives the radial position of the rat in radians, the velocity of the rat can be estimated taking the difference in position between each frame and multiplying by (pi/180)*50 to get the velocity in cm/frame, which can further be multiplied by the fps of the video to get the velocity in cm/s measured at 30 fps. Additionally, all velocities over an arbitrary threshold were removed to account for jumps due to starting a new lap on the track before being smoothed with a 0.5 second gaussian kernel. 
+
+Next, the velocities and timestamps (which were also given by radPos) were binned into 0.5 second bins, where the mean value of each bin represented both the speed and timestamp for that 0.5 second window. Each window was timestamp-aligned to the nearest value given from the LFP struct of the thetaTet from each day. Before taking the wavelet power, the entire EEG signal was bandpass filtered from 1-250 Hz to remove drift and focus on the slow and fast gamma bands. For each window, get_wavelet_power was run for 25-55Hz and 70-130Hz bands, where all values were summed since the get_wavelet_power output is a time x frequency representation of all gamma band values. After all values were computed, the Z-score across each session per band was plotted by velocity values and all begins were plotted for each day graph.
+
+FIGURES
+Each figure is the Z-scored slow gamma value (Z-scored slow/fast gamma per begin, respectively) per log2 of velocity during that 0.5 second window per day. 

@@ -1,0 +1,38 @@
+Headscan analysis pipeline
+
+PREPROCESSING
+DLC results were imported as euclidean X and Y values, along with a probability score. Using all values with a confidence score over 99%, the predicted center of the track was estimated by taking the difference between the maximum and minimum X and Y values. All coordinates were then recentered around that value to make the center of the track (0,0). These values were also converted to polar coordinates using the equation pi+atan2 (MATLAB function for arctan using the full (-pi,pi) range) for the angle and sqrt(x_centered^2 + y^centered^2). The median radius of the track was measured in pixels by splitting the polar coordinates into 32 equally spaced bins along the track and then the mean radius from all 32 bins was considered the radius in pixels and was used to make the conversion to cm. Since 4 points were labeled on the head of the rat, the median was used to estimate the center of the head of the rat. The radial position in pixels was converted to cm by dividing by the median pixel length (estimated radius of the track) and then multiplying by the track in cm. A moving median window with 0.5s kernel was used to further smooth the data. Then, the radial position relative to the center of the track could be estimated by subtracting the median length of the track.
+
+The radial velocity was calculated as the difference in position between frames, and then multiplied by the fps to get the value in cm/s. This value was then smoothed with a 0.5 second moving median kernel.
+
+The polar angle was estimated in the same way: taking the median of the four labeled points, there is no unit correction needed since this is in radians.
+
+Similarly, the angular velocity was calculated by taking the difference in polar angles per frame, then multiplied by the fps to get the value in rad/s. To remove the jumps when going from -pi to pi, or vice versa, angular velocities over a certain threshold were removed, and then a moving median filter was used to smooth the values. 
+
+Pause time was calculated as the number of frames below the minimim threshold, 6 cm/s, divided by the fps to get the value in s.
+
+Laps were counted by dividing the track into 32 equally spaced bins, and then tracking the consecutive bins reached to keep track of the number of laps completed. Since not all rats started at the same place, the range of this value was used.
+
+From here, the Knierem algorithm was used to find putative scanning frames, using the criteria
+	- The rat must be below the running threshold
+	- The rat's head being off the track
+	- The rat's head being out of the IQR built from a 4 second buffer of running events of either radial position or velocity.
+
+Further, all scanning events needed to be above 0.4 seconds, so consecutive frames of less than 0.4 seconds were filtered out. Additionally, counting frame 'clusters' gives the number of events and cluster length gives the headscan time length. 
+
+FIGURES
+Percent Time Pausing - Measures the amount of time pausing out of the entire session (Pause time / Session Time)
+
+Time per Lap - Measures the amount of time spent per lap (Session time / Number of laps completed)
+
+Headscans per Lap - Number of headscan events per lap (Number of headscans / Number of laps completed+1) *1 was added to account for bias from low lap numbers.*
+
+Percent time headscanning - Amount of time spent headscanning, normalized by pause time (Time headscanning / Time Pausing) *The animal being paused is a requirement for the headscanning, so it seemed more reasonable to divide by pause time instead of total time*
+
+Headscan time - Gives the total time spend head scanning per lap (Amount of time headscanning / number of laps+1) *1 was added to account for bias from low lap numbers.*
+
+Pause time per lap - Ffives the amount of time paused, normalized by number of laps (Pause time / number of laps+1) *1 was added to account for bias from low lap numbers.*
+
+Average headscan time - Amount of time spent headscanning, per head scanning event (Mean headscan time)
+
+Laps ran - Number of laps ran according to preprocessing metric. (Number of laps)

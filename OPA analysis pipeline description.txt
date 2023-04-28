@@ -1,0 +1,13 @@
+OPA Analysis Pipeline
+
+PREPROCESSING
+DLC results were imported, and a third-order (Default MATLAB function value) median filter was used to smooth the nose points. The center of each object was estimated by taking the median of all of the estimated object points. Then, the distance between the nose and object were computed using the euclidean distance formula. This gives the distance in pixels. Since the box is 1m x 1m and it was observed that the maximum distance in both the X and Y direction was around 480 pixels, multiplying each pixel distance by 4.8 converts the estimated distance between the nose and each object in cm. This gives the distance in cm per frame, which was further broken down to count the number of frames within the set distance threshold (15 cm), and finally only events that were longer than the minimum time threshold of 0.5 seconds per interaction with the object. After, the filtered events were partitioned by minute into bins for the minute-by-minute analysis. 
+
+FIGURES
+Each figure represents the mean/standard error of apoE3 vs apoE4 and is specified by the session type (F, NO, NL...) and session number (S1, S2, S3) measured per minute. 
+
+numEventsObjA/numEventsObjB - Gives the number of interactions that each rat had with the object (Number of times crossing 15cm threshold for more than 0.5 seconds). 
+
+perMinObjA/perMinObjB - Gives the amount of time within that threshold, from events that meet the same criteria as above.
+
+[WiP] discrimination_index - Gives the discrimination index (DI) between the two objects for each session, and aggregated for all rats per group (DI = Time near object A / [Time near object A + Time near object B])
