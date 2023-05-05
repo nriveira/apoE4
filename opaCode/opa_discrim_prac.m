@@ -2,8 +2,8 @@ opa_build_struct;
 
 %% During session, compare exploration times to practice session with no objects
 % First get practice session
- session_number = 'S3';
-practice_number = 'P3';
+session_number = 'S1';
+practice_number = 'P1';
 firstXframes = 1800 * 3; % 30 fps -> 1800 frames 60 seconds
 
 % Isolate sessions and practice sessions
@@ -53,12 +53,4 @@ for g = 1:length(groups)
         s_index = s_index+1;
     end
 end
-
-%% Plot Data
-figure(1); clf;
-data = reshape([s_struct(:).mean], [3,12]); 
-bar(data);
-xticklabels({'Object A','Object B','Obj A-B'})
-ylabel('Discrimination index')
-legend(session_types)
 
