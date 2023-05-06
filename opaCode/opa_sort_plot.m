@@ -10,42 +10,34 @@ for g = 1:length(opa_sorted)
     no_discrim = nan(length(opa_sorted(g).rat), 1);
     nonl_discrim = nan(length(opa_sorted(g).rat), 1);
 
-    f_prac = nan(length(opa_sorted(g).rat), 3);
-    nl_prac = nan(length(opa_sorted(g).rat), 3);
-    no_prac = nan(length(opa_sorted(g).rat), 3);
-    nonl_prac = nan(length(opa_sorted(g).rat), 3);
-
     for r = 1:length(opa_sorted(g).rat)
-        familiar_sess = opa_sorted(g).rat(r).session((contains({opa_sorted(g).rat(r).session.name}, 'F')) & (~{isempty({opa_sorted(g).rat(r).session.(var_of_interest)})}));
+        familiar_sess = opa_sorted(g).rat(r).familiar;
+        
         f_sess_concat = [];
+
         for i = 1:length(familiar_sess)
-            f_sess_concat = [f_sess_concat; familiar_sess(i).(var_of_interest)];
+            f_sess_concat = [f_sess_concat; mean([familiar_sess(i).familiar.(var_of_interest)])];
         end
 
         f_discrim(r) = mean(f_sess_concat);
         nl_discrim(r) = opa_sorted(g).rat(r).session(strcmp({opa_sorted(g).rat(r).session.name}, 'NL')).(var_of_interest);
         no_discrim(r) = opa_sorted(g).rat(r).session(strcmp({opa_sorted(g).rat(r).session.name}, 'NO')).(var_of_interest);
         nonl_discrim(r) = opa_sorted(g).rat(r).session(strcmp({opa_sorted(g).rat(r).session.name}, 'NO_NL')).(var_of_interest);
-
-        f_prac_concat = [];
-        for i = 1:length(familiar_sess)
-            f_prac_concat = [f_prac_concat; familiar_sess(i).objA_discrim];
-        end
-        f_prac(r, :) = mean(f_prac_concat);
-        nl_prac(r,:) = opa_sorted(g).rat(r).session(strcmp({opa_sorted(g).rat(r).session.name}, 'NL')).objA_discrim;
-        no_prac(r,:) = opa_sorted(g).rat(r).session(strcmp({opa_sorted(g).rat(r).session.name}, 'NO')).objA_discrim;
-        nonl_prac(r,:) = opa_sorted(g).rat(r).session(strcmp({opa_sorted(g).rat(r).session.name}, 'NO_NL')).objA_discrim;
     end
-    
+
+    opa_sorted(g).f_discrim = f_discrim; 
     opa_sorted(g).f_discrim_mean = mean(f_discrim, 'omitnan');
     opa_sorted(g).f_discrim_sterr = std(f_discrim) / sqrt(sum(~isnan(f_discrim)));
 
+    opa_sorted(g).nl_discrim = nl_discrim;
     opa_sorted(g).nl_discrim_mean = mean(nl_discrim, 'omitnan');
     opa_sorted(g).nl_discrim_sterr = std(nl_discrim) / sqrt(sum(~isnan(nl_discrim)));
 
+    opa_sorted(g).no_discrim = no_discrim;
     opa_sorted(g).no_discrim_mean = mean(no_discrim, 'omitnan');
     opa_sorted(g).no_discrim_sterr = std(no_discrim) / sqrt(sum(~isnan(no_discrim)));
 
+    opa_sorted(g).nonl_discrim = nonl_discrim;
     opa_sorted(g).nonl_discrim_mean = mean(nonl_discrim, 'omitnan');
     opa_sorted(g).nonl_discrim_sterr = std(nonl_discrim, 'omitnan') / sqrt(sum(~isnan(nonl_discrim)));
 end

@@ -9,7 +9,7 @@ for g = 1:length(groups) % Cycle through both groups
     rats = unique({opa_struct(strcmp({opa_struct.group}, groups{g})).name});
     for r = 1:length(rats) % Cycle through each rat
         opa_sorted(g).rat(r).name = rats{r};
-                
+
         % Isolate opa struct sessions and practices
         temp_rat_struct = opa_struct(strcmp({opa_struct.name}, rats{r}) & strcmp({opa_struct.group}, groups{g}));
         opa_rat_pract = temp_rat_struct(contains({temp_rat_struct.sessionType}, 'P'));
@@ -17,6 +17,7 @@ for g = 1:length(groups) % Cycle through both groups
         opa_rat_novel = temp_rat_struct((~contains({temp_rat_struct.sessionType}, 'P') & ~contains({temp_rat_struct.sessionType}, 'F')));
 
         novel = unique({opa_rat_novel.sessionType});
+        fam = unique({opa_rat_famil.sessionType});
         temp_rat_struct = [];
         
         % Analyze all of the novel conditions
@@ -58,6 +59,48 @@ for g = 1:length(groups) % Cycle through both groups
 
                 opa_sorted(g).rat(r).session(s).s2vs1s3_objA_avgDI = 0.5*(di_s1_objA + di_s3_objA);
                 opa_sorted(g).rat(r).session(s).s2vs1s3_objB_avgDI = 0.5*(di_s1_objB + di_s3_objB);
+            end
+        end
+
+        % Analyze the familiar conditions
+        for f = 1:length(fam)
+            opa_rat_temp = opa_rat_famil(strcmp({opa_rat_famil.sessionType}, fam{f}));
+            opa_sorted(g).rat(r).session(f+length(novel)).name = opa_rat_temp.sessionType;
+            opa_sorted(g).rat(r).session(f+length(novel)).session = opa_rat_temp;
+
+            if(length(opa_rat_temp) > 2) % Only do sessions with S1, S2, and S3
+                s1_first3_objA = opa_rat_temp(strcmp({opa_rat_temp.sessionNumber}, 'S1')).first3_objA;
+                s1_first3_objB = opa_rat_temp(strcmp({opa_rat_temp.sessionNumber}, 'S1')).first3_objB;
+                s2_first3_objA = opa_rat_temp(strcmp({opa_rat_temp.sessionNumber}, 'S2')).first3_objA;
+                s2_first3_objB = opa_rat_temp(strcmp({opa_rat_temp.sessionNumber}, 'S2')).first3_objB;
+                s3_first3_objA = opa_rat_temp(strcmp({opa_rat_temp.sessionNumber}, 'S3')).first3_objA;
+                s3_first3_objB = opa_rat_temp(strcmp({opa_rat_temp.sessionNumber}, 'S3')).first3_objB;
+    
+                % Discrimination index of S2 vs S1
+                opa_sorted(g).rat(r).session(f+length(novel)).s2vs1_objA_discrim = s2_first3_objA / (s2_first3_objA + s1_first3_objA);
+                opa_sorted(g).rat(r).session(f+length(novel)).s2vs1_objB_discrim = s2_first3_objB / (s2_first3_objB + s1_first3_objB);
+
+                % Discrimination index of S2 vs S3
+                opa_sorted(g).rat(r).session(f+length(novel)).s2vs3_objA_discrim = s2_first3_objA / (s2_first3_objA + s3_first3_objA);
+                opa_sorted(g).rat(r).session(f+length(novel)).s2vs3_objB_discrim = s2_first3_objB / (s2_first3_objB + s3_first3_objB);
+
+                % Discrimination index of S1 vs S3
+                opa_sorted(g).rat(r).session(f+length(novel)).s2vs3_objA_discrim = s1_first3_objA / (s1_first3_objA + s3_first3_objA);
+                opa_sorted(g).rat(r).session(f+length(novel)).s2vs3_objB_discrim = s1_first3_objB / (s1_first3_objB + s3_first3_objB);
+                
+                % Discrimination index of S2 vs S1+S3/2 (Average time)
+                opa_sorted(g).rat(r).session(f+length(novel)).s2vs1s3_objA = s2_first3_objA / (0.5*(s1_first3_objA+s3_first3_objA) + s2_first3_objA);
+                opa_sorted(g).rat(r).session(f+length(novel)).s2vs1s3_objB = s2_first3_objB / (0.5*(s1_first3_objB+s3_first3_objB) + s2_first3_objB);
+
+                % Discrimination index of S2 vs S1+S3/2 (Average DI)
+                di_s1_objA = s2_first3_objA / (s2_first3_objA + s1_first3_objA);
+                di_s3_objA = s2_first3_objA / (s2_first3_objA + s3_first3_objA);
+
+                di_s1_objB = s2_first3_objA / (s2_first3_objA + s1_first3_objA);
+                di_s3_objB = s2_first3_objB / (s2_first3_objB + s3_first3_objB);
+
+                opa_sorted(g).rat(r).session(f+length(novel)).s2vs1s3_objA_avgDI = 0.5*(di_s1_objA + di_s3_objA);
+                opa_sorted(g).rat(r).session(f+length(novel)).s2vs1s3_objB_avgDI = 0.5*(di_s1_objB + di_s3_objB);
             end
         end
 
