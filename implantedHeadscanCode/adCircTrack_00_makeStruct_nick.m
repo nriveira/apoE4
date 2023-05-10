@@ -1,4 +1,4 @@
-function group = adCircTrack_00_makeStruct
+function group = adCircTrack_00_makeStruct_nick
 % function group = fmr1CircTrack_00_makeStruct
 % 
 % PURPOSE:
@@ -13,15 +13,19 @@ function group = adCircTrack_00_makeStruct
 % MMD
 % 07/2021
 % Colgin Lab
+addpath(genpath('C:\Users\nrive\Projects\Colgin Lab\apoE4\lfp_code'));
+addpath(genpath('C:\Users\nrive\Projects\Colgin Lab\GENERAL_LAB_CODE'));
 
 curDir = pwd;
-structNickName = 'nick';
+structNickName = 'nick'; 
 
+tic
 group = adCircTrack_1_buildDataStruct; %calls fmr1CircTrack_0_
 group = adCircTrack_2_attachPfs(group);
 group = adCircTrack_3_tagLaps_nick(group);
+toc
 
-cd('..\implantedHeadscanData\')
+cd(pwd)
 
 tmpDate = clock;
 cellDate = cell(1,3);

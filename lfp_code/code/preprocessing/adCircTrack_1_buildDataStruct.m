@@ -66,6 +66,10 @@ for g = 1:2
                 
                 group(g).rat(r).day(d).begin(b).radPos = radPos;
                 group(g).rat(r).day(d).begin(b).coords = coords;
+                [pss, filt_pss, num_headscans] = adCircTrack_x_findHeadscans(coords);
+                group(g).rat(r).day(d).begin(b).pss = pss;
+                group(g).rat(r).day(d).begin(b).filt_pss = filt_pss;
+                group(g).rat(r).day(d).begin(b).num_headscans = num_headscans;
                 
                 tetNums = [];
 %                 uCntr = 0;

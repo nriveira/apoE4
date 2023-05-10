@@ -64,8 +64,8 @@ for g = 1:length(groups) % Cycle through both groups
 
         % Analyze the familiar conditions
         for f = 1:length(fam)
+            opa_sorted(g).rat(r).session(f+length(novel)).name = fam{f};
             opa_rat_temp = opa_rat_famil(strcmp({opa_rat_famil.sessionType}, fam{f}));
-            opa_sorted(g).rat(r).session(f+length(novel)).name = opa_rat_temp.sessionType;
             opa_sorted(g).rat(r).session(f+length(novel)).session = opa_rat_temp;
 
             if(length(opa_rat_temp) > 2) % Only do sessions with S1, S2, and S3
