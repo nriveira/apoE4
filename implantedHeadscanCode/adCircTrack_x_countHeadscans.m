@@ -18,7 +18,7 @@ for g = 1:2
                 filt_pss = group(g).rat(r).day(d).begin(b).filt_pss;
 
                 headscan_count(d,b) = group(g).rat(r).day(d).begin(b).num_headscans;
-                headscan_duration(d,b) = mean(filt_pss(:,2)-filt_pss(:,1));
+                headscan_duration(d,b) = mean(filt_pss(:,2)-filt_pss(:,1))/FPS;
                 headscan_time(d,b) = sum(pss)/FPS;
             end
         end
