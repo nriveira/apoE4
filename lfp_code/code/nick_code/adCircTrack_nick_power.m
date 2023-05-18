@@ -4,7 +4,7 @@ function group = adCircTrack_nick_power(group)
     FPS = 30;
     TRACK_RAD = 50;
     CM_THRESH = 5;
-    RUN_THRESH = 0.5 * FPS;
+    RUN_THRESH = 1 * FPS;
 
     for g = 1:length(group)
         for r = 1:length(group(g).rat)
@@ -41,8 +41,12 @@ function group = adCircTrack_nick_power(group)
                     degVelo(abs(degVelo) > 100) = 0;
                     degVelo = abs(movmean(degVelo,7));
 
-                    % Find all of the times moving over 6 cm/s
-                    running = diff(degVelo > CM_THRESH);
+                    % Find all of the times moving over 6 cm/s and add one
+                    % second buffer to each side
+                    overThresh = degVelo > CM_THRESH; 
+                    overThreshBuffer = [conv(overThresh, ones(FPS/2, 1),'same') > 2];
+                    fprintf('Time in theta mode: %1.4f\n', sum(overThreshBuffer)/length(overThreshBuffer))
+                    running = diff(overThreshBuffer);
 
                     %  For each instance of moving over 6 cm, run cut2theta
                     % if running for over 0.5 seconds
@@ -64,21 +68,33 @@ function group = adCircTrack_nick_power(group)
                     lapTrack = lapNum(running_start);
                     runningInd = [running_start', running_end', lapTrack];
                     thetaCutsBegin = [];
+                    powerBegin = [];
 
                     % Loop through those times and find theta sequences
                     for tl = 1:totalLaps
                         curLap = runningInd(runningInd(:,3) == tl,:);
                         thetaCutsLap = [];
+                        powerLap = [];
                         for i = 1:length(curLap)
                             eegStart = find(lfpStruct.ts > lfpTime(runningInd(i,1)), 1);
                             eegStop = find(lfpStruct.ts > lfpTime(runningInd(i,2)), 1);
                             [time, W] = cut2theta(bpLFP(eegStart:eegStop), lfpStruct.Fs);
+                            [pxx, f] = pwelch(bpLFP(eegStart:eegStop), rectwin(1024), [], 1024, lfpStruct.Fs);
+
+                            % Get waveform measures
                             thetaCutsBegin = [thetaCutsBegin W];
                             thetaCutsLap = [thetaCutsLap W];
+                            powerBegin = [powerBegin pxx];
+                            powerLap = [powerLap pxx];
+
                         end
                         group(g).rat(r).day(d).begin(b).lapCuts(tl).thetaCuts = thetaCutsLap;
+                        group(g).rat(r).day(d).begin(b).lapCuts(tl).powerLap = powerLap;
                     end
                     group(g).rat(r).day(d).begin(b).thetaCuts = thetaCutsBegin;
+                    group(g).rat(r).day(d).begin(b).powerBegin = powerBegin;
+                    group(g).rat(r).day(d).begin(b).power_freq = f;
+                    group(g).rat(r).day(d).begin(b).thetaTime = time;
 
                     %figure(g); subplot(5,1,d); hold on; plot(time, mean(thetaCutsBegin,2)); title(['Day' int2str(d) ' Number of Theta cuts: ' int2str(totalCuts)]);
                 end
