@@ -12,7 +12,6 @@ function group = adCircTrack_nick_power(group)
                 tetNums = group(g).rat(r).day(d).tetNums;
                 tt = group(g).rat(r).day(d).thetaTet;
                 cscFn = ['CSC' num2str(tetNums(tt)) '.ncs'];
-                totalCuts = 0;
 
                 for b = 1:length(group(g).rat(r).day(d).begin)
                     cd(group(g).rat(r).day(d).begin(b).dir)
@@ -33,7 +32,7 @@ function group = adCircTrack_nick_power(group)
                     end
 
                     % Bandpass filter lfp data
-                    bpLFP = bandpass(zscore(lfpStruct.data), [1 200], lfpStruct.Fs);
+                    bpLFP = bandpass(zscore(lfpStruct.data), [0.5 200], lfpStruct.Fs);
 
                     % Clean up velocity measurements
                     degVelo = zeros(size(radPos));
@@ -44,8 +43,8 @@ function group = adCircTrack_nick_power(group)
                     % Find all of the times moving over 6 cm/s and add one
                     % second buffer to each side
                     overThresh = degVelo > CM_THRESH; 
-                    overThreshBuffer = [conv(overThresh, ones(FPS/2, 1),'same') > 2];
-                    fprintf('Time in theta mode: %1.4f\n', sum(overThreshBuffer)/length(overThreshBuffer))
+                    overThreshBuffer = conv(overThresh, ones(FPS/2, 1),'same') > 2;
+%                     fprintf('Time in theta mode: %1.4f\n', sum(overThreshBuffer)/length(overThreshBuffer))
                     running = diff(overThreshBuffer);
 
                     %  For each instance of moving over 6 cm, run cut2theta
@@ -62,37 +61,45 @@ function group = adCircTrack_nick_power(group)
                     end
 
                     running_length = running_end - running_start;
+                    fprintf('Average theta mode length: %3.3f\n', mean(running_length)/FPS)
                     running_start(running_length < RUN_THRESH) = [];
                     running_end(running_length < RUN_THRESH) = [];
 
                     lapTrack = lapNum(running_start);
                     runningInd = [running_start', running_end', lapTrack];
                     thetaCutsBegin = [];
-                    powerBegin = [];
+                    totalPowerBegin = [];
+                    thetaPowerBegin = [];
 
                     % Loop through those times and find theta sequences
                     for tl = 1:totalLaps
                         curLap = runningInd(runningInd(:,3) == tl,:);
                         thetaCutsLap = [];
-                        powerLap = [];
+                        totalPowerLap = [];
+                        thetaPowerLap = [];
                         for i = 1:length(curLap)
                             eegStart = find(lfpStruct.ts > lfpTime(runningInd(i,1)), 1);
                             eegStop = find(lfpStruct.ts > lfpTime(runningInd(i,2)), 1);
                             [time, W] = cut2theta(bpLFP(eegStart:eegStop), lfpStruct.Fs);
-                            [pxx, f] = pwelch(bpLFP(eegStart:eegStop), rectwin(1024), [], 1024, lfpStruct.Fs);
+                            [pxx, f] = pwelch(bpLFP(eegStart:eegStop), hamming(1024), [], 1024, lfpStruct.Fs);
+                            thetaPower = sum(pxx(f > 7 & f < 13));
 
                             % Get waveform measures
                             thetaCutsBegin = [thetaCutsBegin W];
                             thetaCutsLap = [thetaCutsLap W];
-                            powerBegin = [powerBegin pxx];
-                            powerLap = [powerLap pxx];
+                            totalPowerBegin = [totalPowerBegin pxx];
+                            totalPowerLap = [totalPowerLap pxx];
+                            thetaPowerBegin = [thetaPowerBegin thetaPower];
+                            thetaPowerLap = [thetaPowerLap thetaPower];
 
                         end
                         group(g).rat(r).day(d).begin(b).lapCuts(tl).thetaCuts = thetaCutsLap;
-                        group(g).rat(r).day(d).begin(b).lapCuts(tl).powerLap = powerLap;
+                        group(g).rat(r).day(d).begin(b).lapCuts(tl).totalPowerLap = totalPowerLap;
+                        group(g).rat(r).day(d).begin(b).lapCuts(tl).thetaPowerLap = thetaPowerLap;
                     end
                     group(g).rat(r).day(d).begin(b).thetaCuts = thetaCutsBegin;
-                    group(g).rat(r).day(d).begin(b).powerBegin = powerBegin;
+                    group(g).rat(r).day(d).begin(b).powerBegin = totalPowerBegin;
+                    group(g).rat(r).day(d).begin(b).thetaPowerBegin = thetaPowerBegin;
                     group(g).rat(r).day(d).begin(b).power_freq = f;
                     group(g).rat(r).day(d).begin(b).thetaTime = time;
 

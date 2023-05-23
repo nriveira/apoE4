@@ -1,11 +1,14 @@
 function group = adCircTrack_nick_powerPlot(group)
+    % adCircTrack_nick_powerPlot
+    % Plots the bootstrap estimated power across each begin for WT and
+    % apoE4 rats
     colors = ['r','g','b','k'];
+    saveDir = 'C:\Users\nrive\Projects\Colgin Lab\apoE4\figures\lfp_power';
     for g = 1:length(group)
-        figure(g); clf;
         for r = 1:length(group(g).rat)
             for d = 1:length(group(g).rat(r).day)
-                subplot(length(group(g).rat(r).day), 1, d); hold on;
-                title(['Day ', num2str(d)])
+                figure; clf; hold on;
+                title([group(g).name ' Day ', num2str(d)])
                 for b = 1:length(group(g).rat(r).day(d).begin)
                     % Get bootstrap confidence intervals of per begin power
                     % spectra
@@ -19,11 +22,12 @@ function group = adCircTrack_nick_powerPlot(group)
                                         
                     patch([power_freq' fliplr(power_freq')], [lower fliplr(upper)], colors(b), 'EdgeColor','none', 'FaceAlpha', 0.3);
                     plot(power_freq, (upper+lower)/2, colors(b))
-                    axis square; xlim([0, 25]); xline(4, '--');
+                    axis square; xlim([0, 45]); xline(2, '--');
                     xlabel('Frequency [Hz]')
                     ylabel('Power [dB]')
                 end
-                legend({'B1','', '','B2','','','B3','','','B4','',})
+                legend({'B1','', '','B2','','','B3','','','B4','',''})
+                %saveas(gcf, [saveDir filesep '20230519_' group(g).name 'Day' num2str(d) '.png'])
             end
         end
     end
