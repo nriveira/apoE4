@@ -3,7 +3,7 @@ function group = adCircTrack_nick_powerPlot(group)
     % Plots the bootstrap estimated power across each begin for apoE3 and
     % apoE4 rats
     colors = ['r','g','b','k'];
-    saveDir = 'C:\Users\nick\Projects\Colgin Lab\apoE4\figures\lfp_power'; 
+    saveDir = 'C:\Users\nrive\Projects\Colgin Lab\apoE4\figures\lfp_power'; 
     for g = 1:length(group)
         for r = 1:length(group(g).rat)
             for d = 1:length(group(g).rat(r).day)
