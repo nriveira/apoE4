@@ -84,7 +84,7 @@ function group = adCircTrack_nick_power(group)
                             eegStart = find(lfpStruct.ts > lfpTime(curLap(i,1)), 1);
                             eegStop = find(lfpStruct.ts > lfpTime(curLap(i,2)), 1);
 
-                            [time, W] = cut2theta(bpLFP(eegStart:eegStop), lfpStruct.Fs);
+                            [time, W, ~] = cut2theta_nick(bpLFP(eegStart:eegStop), lfpStruct.Fs);
                             [pxx, f] = pwelch(bpLFP(eegStart:eegStop), hamming(1024), [], 1024, lfpStruct.Fs);
                             thetaPower = sum(pxx(f > 7 & f < 13));
 

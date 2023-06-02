@@ -1,14 +1,17 @@
 function group = adCircTrack_nick_spikeTrack(group)
 %ADCIRCTRACK_NICK_SPIKETRACK Summary of this function goes here
 %   Detailed explanation goes here
-
+    colors = ['b', 'k'];
+    saveDir = 'C:\Users\nrive\Projects\Colgin Lab\apoE4\figures\lfp_spikes';
     for g = 1:length(group)
+        subplot(2,1,g); hold on;
         for r = 1:length(group(g).rat)
             for d = 1:length(group(g).rat(r).day)
                 tetNums = group(g).rat(r).day(d).tetNums;
                 tt = group(g).rat(r).day(d).thetaTet;
                 cscFn = ['CSC' num2str(tetNums(tt)) '.ncs'];
-                spikeTimeBins = zeros(1201, 1);
+                spikeTimeBins = zeros(250, 1);
+                samples = [];
 
                 for b = 1:length(group(g).rat(r).day(d).begin)
                     cd(group(g).rat(r).day(d).begin(b).dir)
@@ -21,7 +24,7 @@ function group = adCircTrack_nick_spikeTrack(group)
 
                     unitInd = reshape([unit.ID],2,[]);
                     unitInd(2,:) = [];
-                    unit = unit(unitInd == tetNums(tt));
+                    unit = unit(unitInd == tt);
                     
 
                     for i = 1:length(group(g).rat(r).day(d).begin(b).eegInds)
@@ -38,7 +41,7 @@ function group = adCircTrack_nick_spikeTrack(group)
                             
                         % Add spikes to the times given
                         for u = 1:length(unit)
-                            spkTms = unit(u).spkTms;%([unit(u).spkTms] > startTime & [unit(u).spkTms] < stopTime);
+                            spkTms = unit(u).spkTms([unit(u).spkTms] > startTime & [unit(u).spkTms] < stopTime);
                             spkTms = floor((spkTms - startTime)*lfpStruct.Fs);
 
                             % Check if spkTms is empty first
@@ -46,22 +49,39 @@ function group = adCircTrack_nick_spikeTrack(group)
                                 % Go through each spike
                                 for s = 1:length(spkTms)
                                     % Check if it fits each window
-                                    for k = 1:length(kInd)
-                                        kDiff = floor(kInd(k,1)-spkTms(s));
+                                    for k = 1:size(kInd,1)
+                                        kDiff = floor(spkTms(s)-kInd(k,1));
                                         if(kDiff > 0 & kDiff <= 1200)
-                                            spikeTimeBins(kDiff) = spikeTimeBins(kDiff)+1;
+                                            spikeTimeBins(mod(kDiff,250)+1) = spikeTimeBins(mod(kDiff,250)+1)+1;
                                         end
                                     end
                                 end
                             end
                         end
                     end
+
+                    % Collect the theta traces to do the spec plot
+                    thetaTime = group(g).rat(r).day(d).begin(b).thetaTime;
+                    thetaCuts = group(g).rat(r).day(d).begin(b).thetaCuts;
+                    samples = [samples thetaCuts];
+
                 end
-                figure(); 
-                bar(time, movmean(spikeTimeBins,7),5)
-                xlabel('Normalized Time [s]')
-                ylabel('Number of spikes 7-frame moving average (all tets)')
-                title([group(g).name ' Day ' num2str(d) ' (n = ' num2str(sum(spikeTimeBins)) ')'])
+
+                % Create heatmap and spike plot together
+                %fig_index = fig_index+1; 
+                time = 1.44:1.44:720; % 1.44 = 360 (deg) / (2000Hz (Fs) / 8Hz (theta))
+                smoothedSpikeTimeBins = movmean([spikeTimeBins; spikeTimeBins],10);
+                normSSTB = smoothedSpikeTimeBins./sum(smoothedSpikeTimeBins);
+                plot(time, normSSTB, colors(g))
+                xlabel('Theta Phase (8Hz)')
+                ylabel('Normalized Spike Probability (During running)')
+                %title([group(g).name ' Day ' num2str(d) ' (n = ' num2str(sum(spikeTimeBins)) ')'])
+
+                %Pxx = get_wavelet_power(mean(samples,2), 2000, [1, 50], 6);
+                %subplot(2,1,2); colormap(hot); imagesc(thetaTime, 1:50, pow2db(Pxx));
+                %ylabel('Frequency')
+                %xlabel('Normalized time [s]')
+                %saveas(gcf, [saveDir filesep '20230524_' group(g).name 'Day' num2str(d) '_thetaTet.png'])
                 %group(g).rat(r).day(d).spikeTimeBins = spikeTimeBins;
             end
         end

@@ -1,0 +1,35 @@
+1. Behavioral Analyses
+	- OPA task
+		* Added to box [apo figures Nick/OPA]
+
+	- Head Scanning
+		* Added to box [apo figures Nick/headscans]
+
+	- Open field anxiety task (for this destiny has some analysed results shared as excel files, you can find them in the email thread I looped 	you into with Destiny)
+		* Ask Jay to reshare
+
+2. LFP-based differences ApoE4 v/s WT
+	- lap by lap spectrograms (0 to 60-70 Hz) 
+		* Added to box [apo figures Nick/lfp_power/2023XXXX_waveSpec_XXDayX]
+
+	- across sessions average spectrograms 
+		* Added to box [apo figures Nick/lfp_power/perBeginPowerSpectra]
+
+	- all data combined, average spectrograms
+		* Added to box [apo figures Nick/lfp_power/perBeginRawTrace]
+
+	- plot comparing the theta, slow gamma, fast gamma powers (not spectrogram but a line plot)
+		* Added to box [apo figures Nick/lfp_power/perBeginPowerSpectra]
+
+	- frequency v/s velocity plot (theta, slow gamma, fast gamma) (see the kemere et al. paper figures attached here and in the document, just replicating them should suffice)
+		* [I started this one before we switched gears to spike based analysis, can continue working on it]
+
+3. LFP-spike analyses ApoE4 v/s WT
+	- number of spikes v/s theta phase, slow gamma phase, fast gamma phase plots - these are very similar to the ones you have already got. 	Instead of normalized time on the x-axis, it would be theta (or gamma) phase on the x-axis. This would actually show phase locked behavior of spiking which is very apparent in CA1. Laura has a paper on this (and you can even see many reviews in this regard)
+		* Added to box [apo figures Nick/lfp_spikes/20230531_thetaGammaPhase.png]
+
+	- phase-amplitude coupling plots
+		* To do later?
+
+	- the plot we talked about yesterday (theta cycles and showing if there is an apparent precession of place cell spiking visible on the last 	lap of a the day with the highest number of cells)
+		* To do today

@@ -32,9 +32,9 @@ for k=2:length(theta)-1
         time = (1:kstop-kstart+1)/Fs - 0.3;
         if kstart > 0 & kstop < length(thetaBP)
                 dk = kstart - kstartold;
-                kStart = [kStart; kstart];
-                kStop = [kStop; kstop];
                 if dk < Fs/Ftheta + Fs*Ftol & dk > Fs/Ftheta - Fs*Ftol
+                    kStart = [kStart; kstart];
+                    kStop = [kStop; kstop];
                     j = j + 1;
                     %Wd(:,j) = diff(theta(kstart:kstop));   
                     W(:,j) = theta(kstart:kstop);  
