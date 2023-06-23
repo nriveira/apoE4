@@ -17,13 +17,12 @@ function headscan_struct = analyze_headscans(fileLoc, parameters)
     polar_angle = median([headscan_struct.dlc_struct(:).polar_coord],2);
     dadt = diff(polar_angle).*(parameters.fps)*parameters.track_in_cm;
 
-    v_max_cm = parameters.v_max * parameters.track_in_cm / median(radial);
-    v_min_cm = parameters.pause_thresh * parameters.track_in_cm / median(radial);
-
+    v_max_cm = parameters.v_max * median(radial) / parameters.track_in_cm;
 
     dadt(dadt > v_max_cm | dadt < -v_max_cm) = nan;
+
     headscan_struct.angle = polar_angle;
-    headscan_struct.dadt = movmedian(dadt, parameters.median_window, 'omitnan');
+    headscan_struct.dadt = movmean(dadt, parameters.median_window, 'omitnan');
     headscan_struct.total_time = length(headscan_struct.dadt)/parameters.fps;
     
     % Amount of pause time in seconds

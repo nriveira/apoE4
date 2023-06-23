@@ -55,7 +55,8 @@ function output = plot_headscans(fileLoc, param)
     %% Plot individual events
     figure(3); clf; hold on;
     for i = 1:length(headscan_struct.filt_pss)
-        plot(headscan_struct.dlc_struct(param.bodypart).x_centered(headscan_struct.filt_pss(i,1):headscan_struct.filt_pss(i,2)), headscan_struct.dlc_struct(1).y_centered(headscan_struct.filt_pss(i,1):headscan_struct.filt_pss(i,2)), '.');
+        plot(headscan_struct.dlc_struct(param.bodypart).x_centered(headscan_struct.filt_pss(i,1):headscan_struct.filt_pss(i,2)), headscan_struct.dlc_struct(1).y_centered(headscan_struct.filt_pss(i,1):headscan_struct.filt_pss(i,2)),'.');
     end
+    title(['n=' num2str(length(headscan_struct.filt_pss))]);
     axis square
 end

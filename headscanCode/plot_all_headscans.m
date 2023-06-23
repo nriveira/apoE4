@@ -26,16 +26,19 @@ apoE3_headscans = headscan_struct(strcmp({headscan_struct(:).group}, 'apoE3'));
 apoE4_headscans = headscan_struct(strcmp({headscan_struct(:).group}, 'apoE4'));
 
 % Aggregated values to plot
-e3_vals = zeros(12, 6, 8);
-e4_vals = zeros(12, 5, 8);
+e3_vals = zeros(12, 6, 10);
+e4_vals = zeros(12, 5, 10);
 
 % Values represent
 % - Laps per session
-% - Time per lap time
-% - Pause time per lap
-% - Pause time per lap (Percentage)
+% - Time per lap (Total time / Number of laps)
+% - Pause time per lap (Total pause time / Number of laps)
 % - Headscans per lap (Number of headscan events)
-% - Headscan Time (Percentage of pause time)
+% - Pause time per lap (normalized by pause time)
+% - Headscan time per lap
+% - Average Headscan time
+% - Headscan ISI (Total time / number of scans)
+% - Scan rate (Head scan events / pause time)
 
 for day = 1:4
     % Split the days back up
@@ -61,8 +64,9 @@ for day = 1:4
 end
 
 %% Plot all values
-titles = {'Laps Ran','Time per lap','Pause time per lap','Percent time pausing','Headscans per lap','Headscan time','Percent time headscanning', 'Average Headscan Time'};
-ylab = {'Laps','Time [s per lap]','Pause time [s per lap]', 'Pause time [percentage]', 'Number of headscans per lap', 'Headscan time [s per lap]', 'Time headscanning [percentage of pauses]', 'Headscan time [s]'};
+titles = {'Laps Ran','Total time per Number of laps','Pause time per Number of laps','Number of Headscans per Number of laps','Pause time per Total time','Percent Time Headscanning', 'Average Headscan Duration', 'Headscan Inter-scan Interval Time', 'Headscan Rate', 'Number of Headscans'};
+ylab = {'Laps','Time [s per lap]','Pause time [s per lap]', 'Number of headscans per lap', 'Pause time [%]', 'Headscan time [%]', 'Average headscan duration [s]', 'Inter-scan Interval [s]', 'Headscans/Pause Time', 'Headscans (Count)'};
+figureSave = '../figures/poster figures';
 
 for feature = 1:size(e3_vals, 3)
     figure(feature); clf; hold on;
@@ -85,36 +89,45 @@ for feature = 1:size(e3_vals, 3)
     xticklabels({'','Day 1','S2','S3','Day 2','S2','S3','Day 3','S2','S3','Day 4','S2','S3'})
     xlabel('Sessions')
     ylabel(ylab{feature})
+    ylim([0 inf])
     legend({'apoE3', 'apoE4'})
+    saveas(gcf, [figureSave filesep '20230623_' char(strrep(titles(feature), ' ', '_'))], 'png')
 end
 
 % Values represent
 % - Laps per session
-% - Time per lap time
-% - Pause time per lap
-% - Pause time per lap (Percentage)
+% - Time per lap (Total time / Number of laps)
+% - Pause time per lap (Total pause time / Number of laps)
 % - Headscans per lap (Number of headscan events)
-% - Headscan Time (Percentage of pause time)
-% - Average headscan time
+% - Pause time percentage (Pause time / Total Time)
+% - Headscan time (Total time spent headscanning)
+% - Average Headscan time (Average headscan duration)
+% - Headscan ISI (Total time / number of scans)
+% - Scan rate (Head scan events / pause time)
+% - Number of events (Total number of headscan events)
+
 function variables = get_figure_data(session)
-    num_laps = session.headscan.num_laps;
-    time_per_lap = session.headscan.total_time / (num_laps+1);
-    pause_per_lap = session.headscan.pause_time / (num_laps+1);
-    pause_per_lap_percentage = session.headscan.pause_time / session.headscan.total_time;
-    headscans_per_lap = session.headscan.num_headscans / (num_laps+1);
+    num_laps = session.headscan.num_laps+1;
+    time_per_lap = session.headscan.total_time / (num_laps);
+    pause_per_lap = session.headscan.pause_time / (num_laps);
+    headscans_per_lap = session.headscan.num_headscans / (num_laps);
 
+    pause_time_percent = session.headscan.pause_time / session.headscan.total_time;
     % Calculate the amount of time spent headscanning (remember fps)
-    headscan_time = sum(session.headscan.filt_pss(:,2)-session.headscan.filt_pss(:,1))/30;
-    headscan_time_per_lap = headscan_time / (num_laps+1);
-    headscan_time_percentage = headscan_time / session.headscan.total_time;
+    headscan_time = sum(session.headscan.filt_pss(:,2)-session.headscan.filt_pss(:,1))/session.headscan.total_time;
     avg_headscan_time = mean(session.headscan.filt_pss(:,2)-session.headscan.filt_pss(:,1))/30;
+    headscan_isi = session.headscan.total_time / session.headscan.num_headscans;
+    headscan_rate = session.headscan.num_headscans / session.headscan.pause_time;
+    num_events = session.headscan.num_headscans;
 
-    variables = [num_laps, ...
+    variables = [num_laps-1, ...
                  time_per_lap, ...
                  pause_per_lap, ...
-                 pause_per_lap_percentage, ... 
                  headscans_per_lap, ...
-                 headscan_time_per_lap, ...
-                 headscan_time_percentage, ...
-                 avg_headscan_time];
+                 pause_time_percent, ... 
+                 headscan_time, ...
+                 avg_headscan_time, ...
+                 headscan_isi, ...
+                 headscan_rate, ...
+                 num_events];
 end

@@ -3,13 +3,13 @@ opa_build_struct;
 
 %% During session 1, compare exploration times between novel and familiar
 % (Even though this is a control)
-session_number = 'S3';
-event_to_track = 'numEvents_objB';
+session_number = 'S2';
+event_to_track = 'first3_objA';
 session_spec = opa_struct(strcmp({opa_struct.sessionNumber}, session_number));
 
 % Get the values per animal, per minute, per type, per group
 max_animals = 6;
-max_minutes = 12;
+max_minutes = 1;
 session_types = unique({session_spec.sessionType});
 groups = unique({session_spec.group});
 s1_struct = {};
@@ -23,9 +23,10 @@ for g = 1:length(groups)
 
         temp_session_spec = temp_session_spec(strcmp({temp_session_spec.sessionType}, s1_struct(s1_index).type));
         % Get all values for a single group/session type for plotting
-        objA_struct = nan(length(temp_session_spec), max_minutes);
+        objA_struct = nan(max_animals, max_minutes);
         for rat = 1:length(temp_session_spec)
-            objA_struct(rat, 1:temp_session_spec(rat).vidMinutes) = temp_session_spec(rat).(event_to_track);
+            %objA_struct(rat, 1:temp_session_spec(rat).vidMinutes) = temp_session_spec(rat).(event_to_track);
+            objA_struct(rat) = temp_session_spec(rat).(event_to_track);
         end
         s1_struct(s1_index).mean = mean(objA_struct, 'omitnan');
         s1_struct(s1_index).sem = std(objA_struct, 'omitnan') / sqrt(length(temp_session_spec));

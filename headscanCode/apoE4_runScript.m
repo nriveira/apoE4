@@ -8,10 +8,17 @@ param.fps = 30;
 param.running_thresh = 6;
 param.radial_thresh = 3;
 param.pause_thresh = 6;
-param.v_max = 25;                                                                                                                                                                                                                                                          
+param.v_max = 25;      
 
-plot_headscans("../headscanData/iteration1/rat387_d1s2DLC_resnet50_headscansFeb24shuffle1_100000.csv", param)
-title('Sample Headscan detection')
+saveDir = '../figures/ADGrant/sample headscans_v2';
+fileLoc = dir('../headscanData/iteration1');
+for d = 3:length(fileLoc)
+    plot_headscans([fileLoc(d).folder filesep fileLoc(d).name], param)
+    figure(3); 
+    saveas(gcf, [saveDir filesep extractBefore(fileLoc(d).name, 'DLC_resnet50')], 'png')
+    saveas(gcf, [saveDir filesep extractBefore(fileLoc(d).name, 'DLC_resnet50')], 'eps')
+    saveas(gcf, [saveDir filesep extractBefore(fileLoc(d).name, 'DLC_resnet50')], 'svg')
+end
 
 %% Plot all headscans
 %       Calls plot_all_headscans function that plots all extracted data

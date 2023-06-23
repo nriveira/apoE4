@@ -5,13 +5,14 @@ function group = adCircTrack_nick_power(group)
     TRACK_RAD = 50;
     CM_THRESH = 5;
     RUN_THRESH = 1 * FPS;
+    figure(1); clf; 
 
     for g = 1:length(group)
         for r = 1:length(group(g).rat)
             for d = 1:length(group(g).rat(r).day)
                 tetNums = group(g).rat(r).day(d).tetNums;
                 tt = group(g).rat(r).day(d).thetaTet;
-                cscFn = ['CSC' num2str(tetNums(tt)) '.ncs'];
+                cscFn = ['CSC' num2str(tt) '.ncs'];
 
                 for b = 1:length(group(g).rat(r).day(d).begin)
                     cd(group(g).rat(r).day(d).begin(b).dir)
@@ -74,6 +75,8 @@ function group = adCircTrack_nick_power(group)
                     totalPowerBegin = [];
                     thetaPowerBegin = [];
 
+                    totalCuts = 0;
+
                     % Loop through those times and find theta sequences
                     for tl = 1:totalLaps
                         curLap = runningInd(runningInd(:,3) == tl,:);
@@ -90,6 +93,7 @@ function group = adCircTrack_nick_power(group)
 
                             % Also find the spikes that happened during
                             % that time to add to spike plot
+                            totalCuts = totalCuts + size(W, 1);
 
                             % Get waveform measures
                             thetaCutsBegin = [thetaCutsBegin W];
@@ -116,7 +120,8 @@ function group = adCircTrack_nick_power(group)
                     group(g).rat(r).day(d).begin(b).power_freq = f;
                     group(g).rat(r).day(d).begin(b).thetaTime = time;
 
-                    %figure(g); subplot(5,1,d); hold on; plot(time, mean(thetaCutsBegin,2)); title(['Day' int2str(d) ' Number of Theta cuts: ' int2str(totalCuts)]);
+                    subplot(2,1,g); hold on; plot(time, mean(thetaCutsBegin,2));
+                    title([group(g).name 'theta waveform (1 line = 1 begin)']);
                 end
             end
         end

@@ -16,8 +16,7 @@ W = zeros(length(time),10000);
 
 thetaBP = fftbandpass(theta,Fs,Ftheta-5,Ftheta-4,Ftheta+4,Ftheta+5);
 
-kStart = [];
-kStop = [];
+kInd = [];
 kstart = 0;
 j = 0;
 
@@ -33,8 +32,7 @@ for k=2:length(theta)-1
         if kstart > 0 & kstop < length(thetaBP)
                 dk = kstart - kstartold;
                 if dk < Fs/Ftheta + Fs*Ftol & dk > Fs/Ftheta - Fs*Ftol
-                    kStart = [kStart; kstart];
-                    kStop = [kStop; kstop];
+                    kInd = [kInd; k];
                     j = j + 1;
                     %Wd(:,j) = diff(theta(kstart:kstop));   
                     W(:,j) = theta(kstart:kstop);  
@@ -45,4 +43,3 @@ for k=2:length(theta)-1
 end
 
 W = W(:,1:j);
-kInd = [kStart kStop];

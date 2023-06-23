@@ -1,7 +1,6 @@
 % Add radial velocity (in cm) to the group struct
 function group = adCircTrack_nick_getLapSpeed(group)
-conversion_factor = (pi * 50) / (180*30); % Converting to cm/s given track radius 
-
+TRACK_RADIUS = 50;
 for g = 1:2
 %for g = 1 %this is only for apoE4 rat
     fprintf('%s\n', group(g).name)
@@ -9,15 +8,20 @@ for g = 1:2
         fprintf('\tRat %d/%d (%s)\n', r, length(group(g).rat), group(g).rat(r).name);
         for d = 1:length(group(g).rat(r).day)
             fprintf('\t\tDay %d/%d\n', d, length(group(g).rat(r).day));
-            tic
+            figure(d);
             for b = 1:length(group(g).rat(r).day(d).begin)
                 fprintf('\t\t\tBegin %d\n', b);
-                velocity = diff(group(g).rat(r).day(d).begin(b).radPos(:,2))./conversion_factor;
-                velocity(abs(velocity) > 90) = 0;
+
+                tic
+                
                 timestamps = group(g).rat(r).day(d).begin(b).radPos(2:end,1);
                 fs = 1/(timestamps(2)-timestamps(1));
 
-                winLength = floor(fs/2);
+                radial_position = deg2rad(group(g).rat(r).day(d).begin(b).radPos(:,2))*TRACK_RADIUS;
+                velocity = diff(radial_position)*fs;
+                velocity(abs(velocity) > 128) = 0;
+
+                winLength = floor(fs/2); % Half second windows
                 velocity = abs(smoothdata(velocity, "gaussian", winLength));
 
                 velocityBin = zeros(floor(length(velocity)/winLength),2);
@@ -34,6 +38,8 @@ for g = 1:2
                 cscFn = ['CSC' num2str(group(g).rat(r).day(d).thetaTet) '.ncs'];
                 fprintf('\t\t\t\tFiltering LFP for Tetrode #%d\n', group(g).rat(r).day(d).thetaTet);
                 lfpStruct = read_in_lfp([group(g).rat(r).day(d).begin(b).dir filesep cscFn]);
+
+                % Dont Z-score yet to get raw power that will be compared
                 eeg_Z = bandpass(lfpStruct.data, [1 250], lfpStruct.Fs);
                 
                 % For each timestep found in the velocity bin, calculate
@@ -53,22 +59,21 @@ for g = 1:2
                 gamma_wavelet_zscore = zscore(gamma_wavelet);
                 group(g).rat(r).day(d).begin(b).gamma_wavelet = gamma_wavelet_zscore;
 
-                figure(1); hold on;
+                subplot(2,2,2*(g-1)+1);hold on;
                 plot(log2(velocityBin(:,2)), gamma_wavelet_zscore(:,1), '.');
 
-                figure(2); hold on;
+                subplot(2,2,2*g); hold on;
                 plot(log2(velocityBin(:,2)), gamma_wavelet_zscore(:,2), '.');
+
+                toc
             end
 
-            figure(1); xlim([-2 6]); ylim([-3 6]); title([group(g).name ' Day ' num2str(d) ' Slow Gamma'])
+            subplot(2,2,2*(g-1)+1); xlim([-2 6]); ylim([-3 6]); title([group(g).name ' Day ' num2str(d) ' Slow Gamma'])
             xlabel('log2(Speed) (cm/s)'); ylabel('Slow Gamma Power [stdev from mean]');
-            save_name = ['.\figures\20230414_' group(g).name 'd' num2str(d) '_slowgamma.png'];
-            saveas(gcf, save_name); clf;
-            figure(2); xlim([-2 6]); ylim([-3 6]); title([group(g).name ' Day ' num2str(d) ' Fast Gamma'])
+            subplot(2,2,2*g); xlim([-2 6]); ylim([-3 6]); title([group(g).name ' Day ' num2str(d) ' Slow Gamma'])
             xlabel('log2(Speed) (cm/s)'); ylabel('Fast Gamma Power [stdev from mean]');
-            save_name = ['.\figures\20230414_' group(g).name 'd' num2str(d) '_fastgamma.png'];
-            saveas(gcf, save_name); clf;
-            toc
+            %save_name = ['.\figures\20230414_' group(g).name 'd' num2str(d) '_slowgamma.png'];
+            %saveas(gcf, save_name); clf;
         end
     end
 end

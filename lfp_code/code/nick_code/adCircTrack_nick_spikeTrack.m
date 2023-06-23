@@ -2,14 +2,14 @@ function group = adCircTrack_nick_spikeTrack(group)
 %ADCIRCTRACK_NICK_SPIKETRACK Summary of this function goes here
 %   Detailed explanation goes here
     colors = ['b', 'k'];
-    saveDir = 'C:\Users\nrive\Projects\Colgin Lab\apoE4\figures\lfp_spikes';
+    saveDir = 'C:\Users\nrive\Projects\Colgin Lab\apoE4\figures\lfp_e3e4';
     for g = 1:length(group)
         subplot(2,1,g); hold on;
         for r = 1:length(group(g).rat)
             for d = 1:length(group(g).rat(r).day)
                 tetNums = group(g).rat(r).day(d).tetNums;
                 tt = group(g).rat(r).day(d).thetaTet;
-                cscFn = ['CSC' num2str(tetNums(tt)) '.ncs'];
+                cscFn = ['CSC' num2str(tt) '.ncs'];
                 spikeTimeBins = zeros(250, 1);
                 samples = [];
 
@@ -72,17 +72,11 @@ function group = adCircTrack_nick_spikeTrack(group)
                 time = 1.44:1.44:720; % 1.44 = 360 (deg) / (2000Hz (Fs) / 8Hz (theta))
                 smoothedSpikeTimeBins = movmean([spikeTimeBins; spikeTimeBins],10);
                 normSSTB = smoothedSpikeTimeBins./sum(smoothedSpikeTimeBins);
-                plot(time, normSSTB, colors(g))
+                plot(time, normSSTB, 'DisplayName', [group(g).name ' Day ' num2str(d) ' (n = ' num2str(sum(spikeTimeBins)) ')'])
                 xlabel('Theta Phase (8Hz)')
-                ylabel('Normalized Spike Probability (During running)')
-                %title([group(g).name ' Day ' num2str(d) ' (n = ' num2str(sum(spikeTimeBins)) ')'])
-
-                %Pxx = get_wavelet_power(mean(samples,2), 2000, [1, 50], 6);
-                %subplot(2,1,2); colormap(hot); imagesc(thetaTime, 1:50, pow2db(Pxx));
-                %ylabel('Frequency')
-                %xlabel('Normalized time [s]')
-                %saveas(gcf, [saveDir filesep '20230524_' group(g).name 'Day' num2str(d) '_thetaTet.png'])
-                %group(g).rat(r).day(d).spikeTimeBins = spikeTimeBins;
+                ylabel('Posterior Spike Probability (During running)')
+                title([group(g).name ' Phase coupling'])
+                legend()
             end
         end
     end

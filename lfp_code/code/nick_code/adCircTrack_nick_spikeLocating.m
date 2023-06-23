@@ -1,14 +1,13 @@
 function group = adCircTrack_nick_spikeLocating(group)
 %ADCIRCTRACK_NICK_SPIKETRACK Summary of this function goes here
 %   Detailed explanation goes here
-    thetaBins = 250;
-    saveDir = 'C:\Users\nrive\Projects\Colgin Lab\apoE4\figures\lfp_spikes';
+    saveDir = 'C:\Users\nrive\Projects\Colgin Lab\apoE4\figures\lfp_e3e4';
     for g = 1:length(group)
         for r = 1:length(group(g).rat)
             for d = 1:length(group(g).rat(r).day)
                 tetNums = group(g).rat(r).day(d).tetNums;
                 tt = group(g).rat(r).day(d).thetaTet;
-                cscFn = ['CSC' num2str(tetNums(tt)) '.ncs'];
+                cscFn = ['CSC' num2str(tt) '.ncs'];
                 figure(d); hold on;
 
                 for b = 1:length(group(g).rat(r).day(d).begin)
@@ -22,7 +21,7 @@ function group = adCircTrack_nick_spikeLocating(group)
 
                     unitInd = reshape([unit.ID],2,[]);
                     unitInd(2,:) = [];
-                    unit = unit(unitInd == tetNums(tt));
+                    unit = unit(unitInd == tt);
                     spikeStruct = [];
 
                     % For every lap, look at the spike rate as a function

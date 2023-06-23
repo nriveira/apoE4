@@ -1,22 +1,30 @@
 function group = adCircTrack_nick_spikeTiming(group)
+    Fs = 2000;
+    tic
 %ADCIRCTRACK_NICK_SPIKETRACK Summary of this function goes here
 %   Detailed explanation goes here
-    thetaBins = 250; % (Fs / FTheta) / 5 = (2000 / 8) / 5
-    gammaBins = 45; % (Fs / FGamma) / 5
-    figure(1); clf;
+    saveDir = 'C:\Users\nrive\Projects\Colgin Lab\apoE4\figures\lfp_e3e4';
+    boxplot_ind = 1;
 
-    saveDir = 'C:\Users\nrive\Projects\Colgin Lab\apoE4\figures\lfp_spikes';
     for g = 1:length(group)
         for r = 1:length(group(g).rat)
             for d = 1:length(group(g).rat(r).day)
                 tetNums = group(g).rat(r).day(d).tetNums;
                 tt = group(g).rat(r).day(d).thetaTet;
-                cscFn = ['CSC' num2str(tetNums(tt)) '.ncs'];
+                cscFn = ['CSC' num2str(tt) '.ncs'];
 
-                % Keep track of spike timings for these frequency ranges
-                spikeTimeBins_theta = zeros(thetaBins, 1);
-                spikeTimeBins_gamma = zeros(gammaBins, 1);
-                spikeThetaGamma = zeros(thetaBins, gammaBins);
+                phase_index = 0;
+                thetaPhase_spkTms = zeros(1, 90);
+                slowGammaPhase_spkTms = zeros(1, 90);
+                fastGammaPhase_spkTms = zeros(1, 90);
+
+                theta_slowGamma_spkTms = zeros(12, 12);
+                theta_fastGamma_spkTms = zeros(12, 12);
+                slowGamma_fastGamma_spkTms = zeros(12, 12);
+
+                average_theta = [];
+                average_slowGamma = [];
+                average_fastGamma = [];
 
                 for b = 1:length(group(g).rat(r).day(d).begin)
                     cd(group(g).rat(r).day(d).begin(b).dir)
@@ -30,8 +38,15 @@ function group = adCircTrack_nick_spikeTiming(group)
                     unitInd = reshape([unit.ID],2,[]);
                     unitInd(2,:) = [];
                     unit = unit(unitInd == tt);
-                    
-                    counter = 0;
+
+                    if(b == 1) % Initialize once but get all begins
+                        spikes_per_unit = [];
+                        for u = 1:length(unit)
+                            spikes_per_unit(u).ID = unit(u).ID(2);
+                            spikes_per_unit(u).spikes = [];
+                        end
+                    end
+
                     for i = 1:length(group(g).rat(r).day(d).begin(b).eegInds)
                         eegStart = group(g).rat(r).day(d).begin(b).eegInds(i,1);
                         eegStop = group(g).rat(r).day(d).begin(b).eegInds(i,2);
@@ -42,74 +57,136 @@ function group = adCircTrack_nick_spikeTiming(group)
                         % Run cut2theta to get the timings to align spikes
                         % to
                         eegSig = bpLFP(eegStart:eegStop);
-                        [time_theta,W,kInd] = cut2theta_nick(eegSig, lfpStruct.Fs);
-                        [time_gamma,~,kInd_gamma] = cut2freq_nick(eegSig, 45, lfpStruct.Fs);
-                            
+                        thetaBP = fftbandpass(eegSig,Fs,3,4,12,13);
+                        slowGammaBP = fftbandpass(eegSig, Fs, 20, 25, 45, 50);
+                        fastGammaBP = fftbandpass(eegSig, Fs, 60, 65, 140, 145);
+
+                        % Make the phase indices
+                        theta_phase = rad2deg(angle(hilbert(thetaBP)))+180;
+                        slowGamma_phase = rad2deg(angle(hilbert(slowGammaBP)))+180;
+                        fastGamma_phase = rad2deg(angle(hilbert(fastGammaBP)))+180;
+
+                        average_theta = [average_theta, Fs/(2*pi)*median(diff(unwrap(angle(hilbert(thetaBP)))))];
+                        average_slowGamma = [average_slowGamma, Fs/(2*pi)*median(diff(unwrap(angle(hilbert(slowGammaBP)))))];
+                        average_fastGamma = [average_fastGamma, Fs/(2*pi)*median(diff(unwrap(angle(hilbert(fastGammaBP)))))];
+                       
+                        %figure(1); clf; plot(eegSig, 'DisplayName','EEG Signal'); hold on; legend();
+
                         % Add spikes to the times given
                         for u = 1:length(unit)
                             spkTms = unit(u).spkTms([unit(u).spkTms] > startTime & [unit(u).spkTms] < stopTime);
-                            spkTms = floor((spkTms - startTime)*lfpStruct.Fs);
+                            spkTms = floor((spkTms - startTime)*lfpStruct.Fs)+1;
 
-                            counter = counter+length(spkTms);
+                            % Spike normalization factor for histogram
+                            % (1/frequency)
+                            spike_rate = 1/length(unit(u).spkTms);
+                            
+%                             plot(spkTms, eegSig(spkTms), '*', 'DisplayName',['Unit ' num2str(u)])
 
-                            % Check if spkTms is empty first
-                            if(~isempty(spkTms) && ~isempty(kInd))
-                                % Check if it fits each window
-                                for k = 1:size(kInd,1)
-                                    kDiff_theta = floor(spkTms-kInd(k,1));
-                                    kDiff = kDiff_theta(kDiff_theta > 0 & kDiff_theta <= length(time_theta));
+                            % Fill in spike times for each band
+                            thetaPhase_spkTms = thetaPhase_spkTms + (spike_rate*histcounts(theta_phase(spkTms), 90, 'BinLimits', [0, 360]));
+                            slowGammaPhase_spkTms = slowGammaPhase_spkTms + (spike_rate*histcounts(slowGamma_phase(spkTms), 90, 'BinLimits', [0, 360]));
+                            fastGammaPhase_spkTms = fastGammaPhase_spkTms + (spike_rate*histcounts(fastGamma_phase(spkTms), 90, 'BinLimits', [0, 360]));
+                    
+                            % Get the indices for the matrix
+                            theta_ind = floor(theta_phase(spkTms)/30)+1;
+                            sg_ind = floor(slowGamma_phase(spkTms)/30)+1;
+                            fg_ind = floor(fastGamma_phase(spkTms)/30)+1;
+                    
+                            % Fill in the matrix using the indices above
+                            theta_slowGamma_spkTms(theta_ind, sg_ind) = theta_slowGamma_spkTms(theta_ind, sg_ind)+spike_rate;
+                            theta_fastGamma_spkTms(theta_ind, fg_ind) = theta_fastGamma_spkTms(theta_ind, fg_ind)+spike_rate;
+                            slowGamma_fastGamma_spkTms(sg_ind, fg_ind) = slowGamma_fastGamma_spkTms(sg_ind, fg_ind)+spike_rate;
 
-                                    for s = 1:size(kDiff,1)
-                                        thetaPhase = mod(kDiff(s),thetaBins)+1;
-                                        gammaPhase = mod(kDiff(s),gammaBins)+1;
-                                        spikeTimeBins_theta(thetaPhase) = spikeTimeBins_theta(thetaPhase)+1;
-                                        spikeThetaGamma(thetaPhase, gammaPhase) = spikeThetaGamma(thetaPhase, gammaPhase) + 1;
-                                    end
-                                end
-
-                                for k = 1:size(kInd_gamma,1)
-                                    kDiff_gamma = floor(spkTms-kInd_gamma(k,1));
-                                    kDiff = kDiff_gamma(kDiff_gamma > 0 & kDiff_gamma <= length(time_gamma));
-                                    
-                                    for s = 1:size(kDiff,1)
-                                        gammaPhase = mod(kDiff(s),gammaBins)+1;
-                                        spikeTimeBins_gamma(gammaPhase) = spikeTimeBins_gamma(gammaPhase)+1;
-                                    end
-                                end
-                            end
+                            % Also add spikes per unit info
+                            spikes_per_unit(u).spikes = [spikes_per_unit(u).spikes, theta_phase(spkTms)];
                         end
-                        
                     end
+                    boxplot_data(boxplot_ind).theta = average_theta;
+                    boxplot_data(boxplot_ind).slowGamma = average_slowGamma;
+                    boxplot_data(boxplot_ind).fastGamma = average_fastGamma;
+                    boxplot_ind = boxplot_ind+1;
                 end
 
-                % Create heatmap and spike plot together
-                figure(1); subplot(2,2,g); hold on;
-                time_theta = linspace(0, 720, 2*thetaBins); % 1.44 = 360 (deg) / (2000Hz (Fs) / 8Hz (theta))
-                smoothedSpikeTimeBins = movmean([spikeTimeBins_theta; spikeTimeBins_theta],10);
-                normSSTB = smoothedSpikeTimeBins./sum(smoothedSpikeTimeBins);
-                plot(time_theta, normSSTB)
-                xlabel('Theta Phase (8Hz)')
-                ylabel('Normalized Spike Probability (During running)')
+                
+                figure(g); hold on;
+                subplot(3,4,d); 
+                histogram('BinEdges', 0:4:720, 'BinCounts', [thetaPhase_spkTms, thetaPhase_spkTms]);
+                if(d == 1)
+                    title('Theta Phase');
+                    xlabel('Phase (degrees)'); 
+                    ylabel('Normalized Spike Rate'); 
+                else
+                    title(['Day ' num2str(d)])
+                end
 
-                subplot(2,2,g+2); hold on;
-                time_gamma = linspace(1, 360*2, 2*gammaBins);
-                smoothedSpikeTimeBins = movmean([spikeTimeBins_gamma; spikeTimeBins_gamma],5);
-                normSSTB = smoothedSpikeTimeBins./sum(smoothedSpikeTimeBins);
-                plot(time_gamma, normSSTB)
-                xlabel('Gamma Phase (45 Hz)')
-                ylabel('Normalized Spike Probability (During running)')
+                subplot(3,4,d+4); 
+                histogram('BinEdges', 0:4:720, 'BinCounts', [slowGammaPhase_spkTms, slowGammaPhase_spkTms]); 
+                if(d == 1)
+                    title('Slow Gamma Phase');                    
+                    xlabel('Phase (degrees)'); 
+                    ylabel('Normalized Spike Rate'); 
+                else
+                    title(['Day ' num2str(d)])
+                end
 
-                figure(); colormap(hot); imagesc(linspace(0, 360, thetaBins), linspace(-90, 270, gammaBins), spikeThetaGamma); colorbar 
-                xlabel('Theta Phase'); ylabel('Gamma Phase')
-                %subplot(2,1,2); colormap(hot); imagesc(thetaTime, 1:50, pow2db(Pxx));
-                %saveas(gcf, [saveDir filesep '20230524_' group(g).name 'Day' num2str(d) '_thetaTet.png'])
+                subplot(3,4,d+8); 
+                histogram('BinEdges', 0:4:720, 'BinCounts', [fastGammaPhase_spkTms, fastGammaPhase_spkTms]); 
+                if(d == 1)
+                    title('Fast Gamma Phase'); 
+                    xlabel('Phase (degrees)'); 
+                    ylabel('Normalized Spike Rate'); 
+                else
+                    title(['Day ' num2str(d)])
+                end
+
+                figure(g+2); hold on; 
+                subplot(3,4,d);
+                imagesc(1:30:360, 1:30:360, theta_slowGamma_spkTms); colorbar; 
+                if(d == 1)
+                    title([group(g).name ' Theta-Slow Gamma Phase']);
+                    colormap hot; 
+                    ylabel('Slow Gamma Phase'); 
+                    xlabel('Theta Phase');
+                else
+                    title(['Day ' num2str(d)])
+                end
+                subplot(3,4,d+4); 
+                imagesc(1:30:360, 1:30:360, theta_fastGamma_spkTms); colorbar; 
+                if(d == 1)
+                    title([group(g).name ' Theta-Fast Gamma Phase']);
+                    colormap hot;
+                    ylabel('Fast Gamma Phase'); 
+                    xlabel('Theta');
+                else
+                    title(['Day ' num2str(d)])
+                end
+
+                subplot(3,4,d+8); 
+                imagesc(1:30:360, 1:30:360, slowGamma_fastGamma_spkTms); colorbar; 
+                if(d == 1)
+                    title([group(g).name ' Slow Gamma-Fast Gamma Phase']);
+                    colormap hot; 
+                    ylabel('Fast Gamma Phase'); 
+                    xlabel('Slow Gamma Phase');
+                else
+                    title(['Day ' num2str(d)])
+                end
+
+%                 figure(figure_index); figure_index=figure_index+1; clf;
+%                 for u = 1:length(spikes_per_unit)
+%                     subplot(length(spikes_per_unit), 2, 2*(u-1)+1)
+%                     histogram(spikes_per_unit(u).spikes, 90); 
+%                     title([group(g).name ' Day ' num2str(d) ' Unit ' num2str(u)]);
+%                     subplot(length(spikes_per_unit), 2, 2*u);
+%                     histogram(mod((diff(spikes_per_unit(u).spikes)+360),360), 90); 
+%                     title(['Number of spikes: ' num2str(length(spikes_per_unit(u).spikes))]);
+%                 end
+                %saveas(gcf, [saveDir filesep '20230615_SpikePhasePerCell_Day' num2str(d) group(g).name '.png'])
             end
         end
+        figure(g); saveas(gcf, [saveDir filesep '20230615_SpikePhases_Day' num2str(d) group(g).name '.png'])
+        figure(g+2); saveas(gcf, [saveDir filesep '20230615_SpikePhasePhase_Day' num2str(d) group(g).name '.png'])
     end
-
-    figure(1);
-    subplot(2,2,1); title('apoE4 Theta Modulation'); legend({'Day 1','Day 2','Day 3','Day 4','Day 5'})
-    subplot(2,2,2); title('apoE3 Gamma Modulation'); legend({'Day 1','Day 2','Day 3'})
-    subplot(2,2,3); title('apoE4 Theta Modulation'); legend({'Day 1','Day 2','Day 3','Day 4','Day 5'})
-    subplot(2,2,4); title('apoE3 Gamma Modulation'); legend({'Day 1','Day 2','Day 3'})
+    toc
 end

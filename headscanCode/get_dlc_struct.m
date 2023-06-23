@@ -27,6 +27,21 @@ function dlc_struct = get_dlc_struct(inputFile)
         dlc_struct(i).x_centered = x_coord - dlc_struct(i).predicted_center_x;
         dlc_struct(i).y_centered = y_coord - dlc_struct(i).predicted_center_y;
 
+        distance_traveled = (sqrt(diff(dlc_struct(i).x_centered).^2 + diff(dlc_struct(i).y_centered).^2))/30;
+        prev_x = dlc_struct(i).x_centered(1);
+        prev_y = dlc_struct(i).y_centered(1);
+ 
+        % Smooth the data
+        for a = 2:length(dlc_struct(i).x_centered)
+            if(distance_traveled(a-1) > 20) %~25 cm/s jump in one frame
+                dlc_struct(i).x_centered(a) = prev_x;
+                dlc_struct(i).y_centered(a) = prev_y;
+            end
+            prev_x = dlc_struct(i).x_centered(a);
+            prev_y = dlc_struct(i).y_centered(a);
+        end    
+
+        dlc_struct(i).dadt = (sqrt(diff(dlc_struct(i).x_centered).^2 + diff(dlc_struct(i).y_centered).^2))/30;
         dlc_struct(i).polar_coord = pi+atan2(dlc_struct(i).y_centered, dlc_struct(i).x_centered);
         dlc_struct(i).predicted_r = sqrt(dlc_struct(i).x_centered.^2 + dlc_struct(i).y_centered.^2);
 
