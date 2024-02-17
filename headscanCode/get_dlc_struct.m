@@ -4,7 +4,6 @@ function dlc_struct = get_dlc_struct(inputFile)
 %   center (for circle track)
     dlc_output = readmatrix(inputFile);
     dlc_no_scorer = dlc_output(:,2:end);
-    pctile = 0.99;
 
     dlc_struct = [];
     % Add each body part to a different row of DLC struct, points are
@@ -13,44 +12,37 @@ function dlc_struct = get_dlc_struct(inputFile)
         dlc_struct(i).bodypart = 'Unnamed';
         x_coord = dlc_no_scorer(:,(i-1)*3+1);
         y_coord = dlc_no_scorer(:,(i-1)*3+2);
-        dlc_struct(i).probability = dlc_no_scorer(:,(i-1)*3+3);
 
-        % Use high confidence points to center track
-        conf = dlc_struct(i).probability > prctile(dlc_struct(i).probability, pctile);
-        x_conf = x_coord(conf, :);
-        y_conf = y_coord(conf, :);
+        load('center_lookup.mat');
+        % Use the lookup index to get the center values for that video
+        lookup_val = extractBetween(inputFile, 'iteration1\', 'DLC_resnet50');
+        if(sum(strcmp({center_lookup.str}, lookup_val)) == 1)
+            center_val = center_lookup(strcmp({center_lookup.str}, lookup_val)).center;
+            xc = center_val(1);
+            yc = center_val(2);
+        else 
+            lookup_val
+        end
+
+        % Find the center to center all xy values
+        [xc_old,yc_old,R,~] = circfit(x_coord, y_coord);
+        [abs(xc - xc_old) abs(yc-yc_old)];
 
         % Convert to polar coordinates after centering
-        dlc_struct(i).predicted_center_x = ((max(x_conf)+min(x_conf))/2);
-        dlc_struct(i).predicted_center_y = ((max(y_conf)+min(y_conf))/2);
+        dlc_struct(i).predicted_center_x = xc;
+        dlc_struct(i).predicted_center_y = yc;
 
-        dlc_struct(i).x_centered = x_coord - dlc_struct(i).predicted_center_x;
-        dlc_struct(i).y_centered = y_coord - dlc_struct(i).predicted_center_y;
+        x_centered = x_coord - xc;
+        y_centered = y_coord - yc;
+        xy_centered = [x_centered y_centered];
+        xy_centered = remove_artifacts_nick(xy_centered);
 
-        distance_traveled = (sqrt(diff(dlc_struct(i).x_centered).^2 + diff(dlc_struct(i).y_centered).^2))/30;
-        prev_x = dlc_struct(i).x_centered(1);
-        prev_y = dlc_struct(i).y_centered(1);
- 
-        % Smooth the data
-        for a = 2:length(dlc_struct(i).x_centered)
-            if(distance_traveled(a-1) > 20) %~25 cm/s jump in one frame
-                dlc_struct(i).x_centered(a) = prev_x;
-                dlc_struct(i).y_centered(a) = prev_y;
-            end
-            prev_x = dlc_struct(i).x_centered(a);
-            prev_y = dlc_struct(i).y_centered(a);
-        end    
-
-        dlc_struct(i).dadt = (sqrt(diff(dlc_struct(i).x_centered).^2 + diff(dlc_struct(i).y_centered).^2))/30;
-        dlc_struct(i).polar_coord = pi+atan2(dlc_struct(i).y_centered, dlc_struct(i).x_centered);
-        dlc_struct(i).predicted_r = sqrt(dlc_struct(i).x_centered.^2 + dlc_struct(i).y_centered.^2);
-
-        % Centering first, by finding the median radius along 32 split bins
-        [~, ~, bin] = histcounts(dlc_struct(i).polar_coord, 31);
-        bin_centers = zeros(32,1);
-        for bins = 1:length(bin_centers)
-            bin_centers(bins) = median(dlc_struct(i).predicted_r(bin(bin==bins)));
-        end
-        dlc_struct(i).r_length = mean(bin_centers);
+        dlc_struct(i).x_centered = xy_centered(:,1);
+        dlc_struct(i).y_centered = xy_centered(:,2);
+       
+        [polar_coord, dlc_struct(i).predicted_r] = cart2pol(dlc_struct(i).x_centered, dlc_struct(i).y_centered);
+        dlc_struct(i).polar_coord = polar_coord;
+        dlc_struct(i).dadt = diff(unwrap(dlc_struct(i).polar_coord)); % Gives dadt in pixels / frame
+        dlc_struct(i).r_length = R;
     end
 end

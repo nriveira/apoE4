@@ -1,14 +1,7 @@
 function group = adCircTrack_nick_thetaTrace(group)
-    saveDir = 'C:\Users\nrive\Projects\Colgin Lab\apoE4\figures\lfp_e3e4';
-    colors = 'bk';
     for g = 1:length(group)
         for r = 1:length(group(g).rat)
             for d = 1:length(group(g).rat(r).day)
-                figure(d);
-                if(g == 1)
-                    clf;
-                end
-
                 for b = 1:length(group(g).rat(r).day(d).begin)
                     thetaTime = group(g).rat(r).day(d).begin(b).thetaTime;
                     for c = 1:length(group(g).rat(r).day(d).begin(b).lapCuts)

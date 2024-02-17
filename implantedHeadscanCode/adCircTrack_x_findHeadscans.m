@@ -1,34 +1,36 @@
-function [pss, filt_pss, num_headscans] = adCircTrack_x_findHeadscans(coords)
+function [dadt, filt_pss] = adCircTrack_x_findHeadscans(coords)
 % ADCIRCTRACK_X_FINDHEADSCANS
 %   Given a set of coordinates from the LED tracking, characterize headscans as in Monaco et al.
     % First, filter the position data by median filtering it to remove jump
     % discontinuities
-    TRACK_RADIUS = 45;
+    TRACK_RADIUS = 50; % track radius in cm
 
     t = coords(:,1);
     fps = round(1/median(diff(t)));
 
-    x = movmedian(coords(:,2), floor(fps/2));
-    y = movmedian(coords(:,3), floor(fps/2));
+    x_coord = coords(:,2);
+    y_coord = coords(:,3);
+
+    [xc,yc,~,~] = circfit(x_coord, y_coord);
     
     % Get polar coordinate transformation
-    polar_angle = (pi+atan2(y, x))*TRACK_RADIUS;
-    polar_r = sqrt(x.^2 + y.^2) - TRACK_RADIUS;
+    [polar_angle, polar_r] = cart2pol(x_coord-xc, y_coord-yc);
+    polar_angle = pi+polar_angle;
 
-    dadt = diff(polar_angle).*fps;
-    drdt = diff(polar_r);
+    dadt = diff(unwrap(polar_angle)).*fps*TRACK_RADIUS;
+    drdt = diff(polar_r).*fps;
 
     % Filter out any jumps over 30 cm/s to account for new laps
     dadt(dadt > 50) = nan;
     dadt = movmedian(dadt, fps, 'omitnan');
        
     % Variables to be changed later
-    RADIAL_THRESH = 2;
+    RADIAL_THRESH = 4;
     RUNNING_THRESH = 6;
 
     % Knierem algorithm for headscanning (Using 4 second buffer)
     running_buffer = zeros(fps*4, 1);
-    pss = zeros(length(x), 1);
+    pss = zeros(length(x_coord), 1);
     buffer_count = 0;
 
     % At each frame, check conditions (Making sure to convert thresh)
@@ -62,8 +64,8 @@ function [pss, filt_pss, num_headscans] = adCircTrack_x_findHeadscans(coords)
     end
     
 %     figure(1); clf; hold on;
-%     plot(x, y, '.b')
-%     plot(x(pss==1), y(pss==1), '.k');
+%     plot(x_coord, y_coord, '.b')
+%     plot(x_coord(pss==1), y_coord(pss==1), '.k');
 
     % Filter PSS using further criteria
     filt_pss = zeros(length(pss), 2);

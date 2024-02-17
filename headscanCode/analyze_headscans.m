@@ -5,41 +5,38 @@ function headscan_struct = analyze_headscans(fileLoc, parameters)
 
     % Convert radial distance to cm
     radial = median([headscan_struct.dlc_struct(:).predicted_r],2);
-    radial_cm = movmedian((parameters.track_in_cm*radial)./(median(radial)), parameters.median_window);
-    headscan_struct.radial_cm = abs(radial_cm - median(radial_cm));
+    radial_cm = radial./(median([headscan_struct.dlc_struct(:).r_length])/parameters.track_in_cm);
+    headscan_struct.radial_cm = abs(radial_cm - median(radial_cm, 'omitnan'));
 
     % Also convert radial distance velocities to cm/s
     drdt = diff(headscan_struct.radial_cm).*parameters.fps;
     headscan_struct.drdt = movmedian(drdt, parameters.median_window);
     
-    % Convert angle (in radians/frame) to distance traveled (cm/s)
-    
+    % Get polar angle, then multiply by radius to get angular velocity
     polar_angle = median([headscan_struct.dlc_struct(:).polar_coord],2);
-    dadt = diff(polar_angle).*(parameters.fps)*parameters.track_in_cm;
-
-    v_max_cm = parameters.v_max * median(radial) / parameters.track_in_cm;
-
-    dadt(dadt > v_max_cm | dadt < -v_max_cm) = nan;
+    dadt = (parameters.track_in_cm* parameters.fps) * median([headscan_struct.dlc_struct(:).dadt],2);
+    dadt(dadt > parameters.v_max | dadt < -parameters.v_max) = nan;
 
     headscan_struct.angle = polar_angle;
-    headscan_struct.dadt = movmean(dadt, parameters.median_window, 'omitnan');
+    headscan_struct.dadt = movmedian(dadt, parameters.median_window, 'omitnan');
     headscan_struct.total_time = length(headscan_struct.dadt)/parameters.fps;
     
     % Amount of pause time in seconds
-    headscan_struct.pause_time = sum(headscan_struct.dadt > parameters.pause_thresh*(2*pi/(parameters.track_in_cm*parameters.fps))) / parameters.fps;
+    headscan_struct.pause_time = sum(parameters.track_in_cm*headscan_struct.dadt > parameters.pause_thresh) / parameters.fps;
 
     % Count the number of laps using 32 evenly spaced intervals to track
     % the position
     track_spacing = 2*pi/32;
-    current_angle = median(headscan_struct.angle(1:10));
-    headscan_struct.laps = zeros(size(headscan_struct.angle));
+    current_angle = median(headscan_struct.angle(1:10), 'omitnan');
+    %headscan_struct.laps = zeros(size(headscan_struct.angle));
+    headscan_struct.laps = unwrap(median([headscan_struct.dlc_struct(:).polar_coord],2)) / (2*pi);
 
-    for pos = 1:length(headscan_struct.angle)
-       if((headscan_struct.angle(pos) >= mod(current_angle, 2*pi)) & (headscan_struct.angle(pos) <= mod(current_angle, 2*pi)+track_spacing))
-            current_angle = current_angle+track_spacing;
-       end
-       headscan_struct.laps(pos) = current_angle/(2*pi);
-    end
+%     for pos = 1:length(headscan_struct.angle)
+%        if((headscan_struct.angle(pos) >= mod(current_angle, 2*pi)) & (headscan_struct.angle(pos) <= mod(current_angle, 2*pi)+track_spacing))
+%             current_angle = current_angle+track_spacing;
+%        end
+%        headscan_struct.laps(pos) = current_angle/(2*pi);
+%     end
 
     % Knierem algorithm for headscanning (Using 4 second buffer)
     running_buffer = zeros(parameters.fps*4, 1);
@@ -50,7 +47,7 @@ function headscan_struct = analyze_headscans(fileLoc, parameters)
     for i = 1:length(headscan_struct.dadt)
         % Fill running buffer first
         % Make sure the running thresh and dadt are same units!
-        if(headscan_struct.dadt(i) > parameters.running_thresh*(2*pi/(parameters.track_in_cm*parameters.fps)))
+        if(parameters.track_in_cm*headscan_struct.dadt(i) > parameters.running_thresh)
             running_buffer(1:end-1) = running_buffer(2:end);
             running_buffer(end) = i;
             buffer_count = buffer_count+1;
@@ -75,6 +72,13 @@ function headscan_struct = analyze_headscans(fileLoc, parameters)
             end
         end
     end
+
+    % If there are events that are at least 0.4 seconds between them,
+    % connect them
+    duration_threshold = ones(floor(parameters.fps*0.4),1); % In seconds
+    threshold_pss = conv(headscan_struct.pss, duration_threshold, "same");
+    headscan_struct.pss = [threshold_pss >= 5];
+
 
     % Filter PSS using further criteria
     headscan_struct.filt_pss = zeros(length(headscan_struct.pss), 2);

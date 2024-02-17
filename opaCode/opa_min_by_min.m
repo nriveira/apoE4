@@ -13,20 +13,22 @@ figure(1); clf; hold on;
 for sub = 1:4
     subplot(4,1,sub); 
     bar([figure_data.apoE3(sub).perMin_mean, figure_data.apoE4(sub).perMin_mean])
-    legend({'apoE3','apoE4'})
+    legend({'apoE3','apoE4'}, 'Location','bestoutside')
     title(groups{sub});
     ylabel('Time near object [s]')
     xlabel('Minutes of session')
+    xlim([0, 10])
 end
 
 figure(2); clf; hold on;
 for sub = 1:4
     subplot(4,1,sub); 
     bar([figure_data.apoE3(sub).numEvents_mean, figure_data.apoE4(sub).numEvents_mean])
-    legend({'apoE3','apoE4'})
+    legend({'apoE3','apoE4'}, 'Location','bestoutside')
     title(groups{sub});
     ylabel('Number of events')
     xlabel('Minutes of session')
+    xlim([0, 10])
 end
 
 function apo = get_fig_values(analyzed_struct_apo, opa_struct)

@@ -1,0 +1,11 @@
+Detecting running events and aligning with theta cycles
+For each begin, the EEG signal was zscored and bandpass filtered from 1-250 Hz. 
+To find running events:
+The difference in radial position was multiplied by the track radius and the fps to get an estimate of the rat's velocity in cm/s.
+This radial velocity was smoothed with a 0.5 second averaging filter.
+
+Then, with a different 0.5 second sliding window, if the rat is moving greater than 5 cm/s for more than half of that time then it is considered a running frame. A running event consists of at least 30 consecutive running frames.
+
+Then, within each running event, the LFP signal was scanned for theta cycles, and spike timings from each unit were aligned with the LFP. Each theta window is 0.3 seconds before and after the trough of each theta cycle. The phase of the signal was estimated using the hilbert transform of the 6-12 Hz bandpass filtered LFP, and binned in 30 degree increments. 
+
+NOTES: There were very few spikes in the theta windows: Going from 100's of thousands across all sessions to hundreds in the analysis.

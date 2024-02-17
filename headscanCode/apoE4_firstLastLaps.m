@@ -1,6 +1,7 @@
 function output = apoE4_firstLastLaps(headscan_struct)
 % Compare the first and last lap headscan metrics
     groups = {'apoE4', 'apoE3'};
+    saveDir = '../figures/new headscans';
     FPS = 30;
     V_MAX = 6;
 
@@ -8,7 +9,7 @@ function output = apoE4_firstLastLaps(headscan_struct)
         day_headscans = headscan_struct(strcmp([headscan_struct(:).day], num2str(d)));
         for s = 1:3
             session_headscans = day_headscans(strcmp([day_headscans(:).session], num2str(s)));
-            figure("Name",['Day' num2str(d) 'Session' num2str(s)]); hold on;
+            figure(1); clf; hold on;
 
             % Make a matrix to store all of the values with 
             % dimensions: rats x group x first/last lap x metric number
@@ -64,18 +65,30 @@ function output = apoE4_firstLastLaps(headscan_struct)
                 subplot(3,2,i); hold on;
                 bar(metric_mean(:,:,i));
 
+                % apoE4
                 plot(0.85*ones(size(metric_data,1)), metric_data(:,1,1,i),'.k');
                 plot(1.15*ones(size(metric_data,1)), metric_data(:,1,2,i),'.k');
+                errorbar([0.85, 1.15], metric_mean(1,:,i), metric_std(1,:,i), 'vertical', 'Color','k');
+
+                % apoE3
                 plot(1.85*ones(size(metric_data,1)), metric_data(:,2,1,i),'.k');
                 plot(2.15*ones(size(metric_data,1)), metric_data(:,2,2,i),'.k');
+                errorbar([1.85, 2.15], metric_mean(2,:,i), metric_std(2,:,i), 'vertical', 'Color','k');
+
+                legend({'First Lap','Last Lap'})
+                xticks([1, 2])
+                xticklabels({'apoE4','apoE3'})
             end
         
-            subplot(3,2,1); title('Lap Time'); 
-            subplot(3,2,2); title('Pause Time');
-            subplot(3,2,3); title('Number of Headscans');
-            subplot(3,2,4); title('Headscan Time');
-            subplot(3,2,5); title('Headscan ISI');
-            subplot(3,2,6); title('Scan Rate');
+            title_pre = ['Day ' num2str(d) ' Session ' num2str(s)];
+            subplot(3,2,1); title([title_pre ' Lap Time']); ylabel('Time [s]')
+            subplot(3,2,2); title([title_pre ' Pause Time']); ylabel('Time [s]')
+            subplot(3,2,3); title([title_pre ' Number of Headscans']); ylabel('Headscans')
+            subplot(3,2,4); title([title_pre ' Headscan Time']); ylabel('Time [s]')
+            subplot(3,2,5); title([title_pre ' Headscan ISI']); ylabel('ISI (Lap Time / # Headscans)')
+            subplot(3,2,6); title([title_pre ' Scan Rate']); ylabel('# Headscans / Lap Pause Time')
+
+            saveas(gcf, [saveDir filesep '20230703_Day' num2str(d) 'Session' num2str(s)], 'png')
         end
     end
 end

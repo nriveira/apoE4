@@ -23,6 +23,7 @@ tic
 group = adCircTrack_1_buildDataStruct; %calls fmr1CircTrack_0_
 group = adCircTrack_2_attachPfs(group);
 group = adCircTrack_3_tagLaps_nick(group);
+
 toc
 
 cd(pwd)

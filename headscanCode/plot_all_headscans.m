@@ -66,7 +66,7 @@ end
 %% Plot all values
 titles = {'Laps Ran','Total time per Number of laps','Pause time per Number of laps','Number of Headscans per Number of laps','Pause time per Total time','Percent Time Headscanning', 'Average Headscan Duration', 'Headscan Inter-scan Interval Time', 'Headscan Rate', 'Number of Headscans'};
 ylab = {'Laps','Time [s per lap]','Pause time [s per lap]', 'Number of headscans per lap', 'Pause time [%]', 'Headscan time [%]', 'Average headscan duration [s]', 'Inter-scan Interval [s]', 'Headscans/Pause Time', 'Headscans (Count)'};
-figureSave = '../figures/poster figures';
+figureSave = '../figures/poster';
 
 for feature = 1:size(e3_vals, 3)
     figure(feature); clf; hold on;
@@ -77,10 +77,10 @@ for feature = 1:size(e3_vals, 3)
     e4mean = mean(e4_vals(:,:,feature), 2);
     e4error = std(e4_vals(:,:,feature), 0, 2)/sqrt(size(e4_vals(:,:,feature), 2));
     
-    errorbar(e3mean, e3error, 'k');
+    errorbar(e3mean, e3error, 'r');
     errorbar(e4mean, e4error, 'b');
     
-    plot(e3_vals(:,:,feature),'.k');
+    plot(e3_vals(:,:,feature),'.r');
     plot(e4_vals(:,:,feature), '.b');
     
     title(titles{feature})
@@ -91,7 +91,7 @@ for feature = 1:size(e3_vals, 3)
     ylabel(ylab{feature})
     ylim([0 inf])
     legend({'apoE3', 'apoE4'})
-    saveas(gcf, [figureSave filesep '20230623_' char(strrep(titles(feature), ' ', '_'))], 'png')
+    saveas(gcf, [figureSave filesep '20230718_' char(strrep(titles(feature), ' ', '_'))], 'epsc')
 end
 
 % Values represent

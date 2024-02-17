@@ -7,7 +7,7 @@ function [time, W, kInd] = cut2freq_nick(wave, freq, Fs);
 
 %Fs = 1893;
 %freq = 8;    % Hz
-Ftol = 0.0005;  % s
+Ftol = 0.005;  % s
 outerWindow = 5;
 innerWindow = 4;
 

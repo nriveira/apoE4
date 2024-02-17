@@ -15,7 +15,7 @@ function output = plot_headscans(fileLoc, param)
     histogram(headscan_struct.radial_cm)
     
     subplot(3,2,3); hold on;
-    plot(t(1:end-1), headscan_struct.dadt*param.fps, 'b')
+    plot(t(1:end-1), (param.fps*param.track_in_cm)*headscan_struct.dadt, 'b')
     title('Angular Velocity')
     xlabel('Time [s]')
     ylabel('Velocity [cm/s]')
@@ -35,12 +35,15 @@ function output = plot_headscans(fileLoc, param)
     %% Plot the track and distance traveled
     figure(2); clf;
     subplot(2,2,1); hold on;
-    plot(headscan_struct.dlc_struct(param.bodypart).x_centered, headscan_struct.dlc_struct(param.bodypart).y_centered, '.');
-    title('Nose points')
+    plot(median([headscan_struct.dlc_struct(:).x_centered],2), median([headscan_struct.dlc_struct(:).y_centered],2), '.');
+    title('Median points')
     axis square;
     
     subplot(2,2,2)
-    plot(headscan_struct.dlc_struct(param.bodypart).x_centered(headscan_struct.pss==1), headscan_struct.dlc_struct(1).y_centered(headscan_struct.pss==1), '.');
+    x = median([headscan_struct.dlc_struct(:).x_centered],2);
+    y = median([headscan_struct.dlc_struct(:).y_centered],2);
+
+    plot(x(headscan_struct.pss==1), y(headscan_struct.pss==1), '.');
     title('Putative Scanning Sample')
     axis square;
     
@@ -55,8 +58,11 @@ function output = plot_headscans(fileLoc, param)
     %% Plot individual events
     figure(3); clf; hold on;
     for i = 1:length(headscan_struct.filt_pss)
-        plot(headscan_struct.dlc_struct(param.bodypart).x_centered(headscan_struct.filt_pss(i,1):headscan_struct.filt_pss(i,2)), headscan_struct.dlc_struct(1).y_centered(headscan_struct.filt_pss(i,1):headscan_struct.filt_pss(i,2)),'.');
+        x = median([headscan_struct.dlc_struct(:).x_centered],2); 
+        y = median([headscan_struct.dlc_struct(:).y_centered],2);
+        plot(x(headscan_struct.filt_pss(i,1):headscan_struct.filt_pss(i,2)), y(headscan_struct.filt_pss(i,1):headscan_struct.filt_pss(i,2)),'.');
     end
+    viscircles([0,0], median([headscan_struct.dlc_struct(:).r_length]),'Color','k')
     title(['n=' num2str(length(headscan_struct.filt_pss))]);
     axis square
 end

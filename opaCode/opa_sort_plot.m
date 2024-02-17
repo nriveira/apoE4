@@ -99,7 +99,7 @@ yline(0.5, '--')
 xticklabels({'F', '', 'NL', '', 'NO', '', 'NO+NL'})
 title(strrep(var_of_interest, '_', ' '))
 legend({'E3', 'E4'})
-saveas(gcf, ['../figures/ADGrant/' var_of_interest '.eps'])
+saveas(gcf, ['../figures/updated opa/' var_of_interest '.png'])
 
 end % End of analysis
 

@@ -2,22 +2,21 @@
 %       Calls analyze_headscans and plots figures for individual DLC
 %       results
 param.track_in_cm = 50;
-param.bodypart = 1;
 param.median_window = 15;
 param.fps = 30;
 param.running_thresh = 6;
-param.radial_thresh = 3;
+param.radial_thresh = 5;
 param.pause_thresh = 6;
-param.v_max = 25;      
+param.v_max = 50;      
 
-saveDir = '../figures/ADGrant/sample headscans_v2';
+saveDir = '../figures/poster';
 fileLoc = dir('../headscanData/iteration1');
 for d = 3:length(fileLoc)
+    extractBefore(fileLoc(d).name, 'DLC_resnet50');
     plot_headscans([fileLoc(d).folder filesep fileLoc(d).name], param)
-    figure(3); 
+    figure(3);
     saveas(gcf, [saveDir filesep extractBefore(fileLoc(d).name, 'DLC_resnet50')], 'png')
-    saveas(gcf, [saveDir filesep extractBefore(fileLoc(d).name, 'DLC_resnet50')], 'eps')
-    saveas(gcf, [saveDir filesep extractBefore(fileLoc(d).name, 'DLC_resnet50')], 'svg')
+    saveas(gcf, [saveDir filesep extractBefore(fileLoc(d).name, 'DLC_resnet50')], 'epsc')
 end
 
 %% Plot all headscans
